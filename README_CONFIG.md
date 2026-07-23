@@ -1,178 +1,136 @@
-# Módulo M01: Gestión de Inicio y Acceso al Sistema
+# 🏰 Territorio de Niños — Módulo M01: Gestión de Inicio y Acceso
 
-## Descripción
-Implementación completa del módulo de autenticación y gestión de usuarios para el sistema Territorio de Niños, incluyendo:
-- Autenticación con JWT
-- CRUD de usuarios con eliminación lógica
-- Control de acceso basado en roles
-- Documentación automática con Swagger/OpenAPI
+## 📋 Descripción
+Implementación del módulo de autenticación, autorización y gestión de usuarios para el sistema **Territorio de Niños**. 
 
-## Requisitos Previos
-- **Java**: 21 o superior
-- **Maven**: 3.6+
-- **PostgreSQL**: 12 o superior
+### 🌟 Características Clave:
+- 🔑 **Autenticación Stateless JWT**: Firma HS256 con jjwt 0.12.3.
+- 🛡️ **Control de Acceso Basado en Roles (RBAC)**: Roles `ADMINISTRADOR`, `TAQUILLERO` y `OPERARIO`.
+- 🔄 **CRUD de Usuarios**: Registro, consulta, edición y eliminación lógica (`INACTIVO`).
+- 🔐 **Seguridad de Datos**: Encriptación BCrypt, prevención de enumeración de usuarios y CORS configurado.
+- 📜 **Documentación OpenAPI / Swagger**: Swagger UI interactivo e importación directa en Postman.
+- 🛠️ **Arquitectura Limpia**: Principios SOLID, Lombok, DTOs inmutables, auditoría JPA y controlador global de excepciones.
 
-## Pasos de Configuración
+---
 
-### 1. Crear la Base de Datos
-```bash
-# Con el usuario postgres
-psql -U postgres -c "CREATE DATABASE territorioNinos WITH ENCODING 'UTF8';"
-```
+## 💻 Requisitos del Sistema
+- **Java**: 21 LTS
+- **Build Tool**: Maven 3.8+ (incluye Maven Wrapper `./mvnw`)
+- **Base de Datos**: PostgreSQL 12+
 
-### 2. Configurar la Conexión en `application.properties`
-```properties
-spring.datasource.url=jdbc:postgresql://localhost:5432/territorioNinos
-spring.datasource.username=postgres
-spring.datasource.password=TU_CONTRASEÑA
-```
+---
 
-### 3. Generar una Clave JWT Segura
-Ejecutar en Java REPL o en la aplicación:
-```java
-import java.util.Base64;
-import java.security.SecureRandom;
+## ⚙️ Configuración del Entorno
 
-SecureRandom random = new SecureRandom();
-byte[] bytes = new byte[32];
-random.nextBytes(bytes);
-String secretKey = Base64.getEncoder().encodeToString(bytes);
-System.out.println("jwt.secret=" + secretKey);
-```
-
-Actualizar en `application.properties`:
-```properties
-jwt.secret=TU_CLAVE_GENERADA_AQUI
-```
-
-### 4. Compilar el Proyecto
-```bash
-./mvnw clean compile
-```
-
-### 5. Ejecutar Migraciones
-Ejecutar el script de inicialización con psql:
-```bash
-psql -U postgres -d territorioNinos -f src/main/resources/init-db.sql
-```
-
-O ejecutar manualmente en PostgreSQL:
+### 1. Base de Datos
+Crear la base de datos en PostgreSQL:
 ```sql
-INSERT INTO roles (nombre, descripcion, fecha_creacion) VALUES
-('ADMINISTRADOR', 'Administrador del sistema', NOW()),
-('TAQUILLERO', 'Encargado de taquilla', NOW()),
-('OPERARIO', 'Operario del sistema', NOW());
+CREATE DATABASE "territorioNinos" WITH ENCODING 'UTF8';
 ```
 
-### 6. Iniciar la Aplicación
+### 2. Variables de Entorno (Opcional)
+El proyecto utiliza variables de entorno con valores por defecto para entorno local en [application.properties](file:///home/vera/Downloads/Territrio-De-Ninos/src/main/resources/application.properties):
+
+| Variable | Descripción | Valor por defecto (Dev) |
+|---|---|---|
+| `DB_URL` | URL JDBC de PostgreSQL | `jdbc:postgresql://localhost:5432/territorioNinos` |
+| `DB_USERNAME` | Usuario de base de datos | `postgres` |
+| `DB_PASSWORD` | Contraseña de base de datos | `postgres` |
+| `JWT_SECRET` | Clave secreta para firmar tokens JWT | Base64 secret key |
+| `JWT_EXPIRATION_HOURS` | Tiempo de expiración del token | `24` |
+
+---
+
+## 🚀 Ejecución del Proyecto
+
+### Compilar y Ejecutar Pruebas
+```bash
+./mvnw clean test
+```
+
+### Iniciar Servidor en Desarrollo
 ```bash
 ./mvnw spring-boot:run
 ```
 
-La aplicación estará disponible en: `http://localhost:8080/territorioninos`
+La API estará disponible en:
+`http://localhost:8080/territorioninos`
 
-## Acceso a Swagger
-**URL**: http://localhost:8080/territorioninos/swagger-ui.html
+---
 
-## Credenciales por Defecto
-**Email**: admin@territoriodeniños.com  
-**Contraseña**: Admin123456
+## 📚 Documentación de la API
 
-## Flujo de Autenticación
+### Swagger UI
+Interactúa con los endpoints desde el navegador:
+`http://localhost:8080/territorioninos/swagger-ui.html`
 
-### 1. Login
+### Importar en Postman
+Para importar automáticamente la colección en Postman:
+1. Abre Postman y selecciona **Import**.
+2. Ingresa la URL de OpenAPI:
+   `http://localhost:8080/territorioninos/v3/api-docs`
+
+---
+
+## 🔑 Flujo de Autenticación (cURL)
+
+### 1. Autenticarse (Login)
 ```bash
 curl -X POST http://localhost:8080/territorioninos/api/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"correo":"admin@territoriodeniños.com","password":"Admin123456"}'
+  -d '{
+        "correo": "admin@example.com",
+        "password": "Password123"
+      }'
 ```
 
-**Respuesta**:
+**Respuesta HTTP 200 OK**:
 ```json
 {
-  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "token": "eyJhbGciOiJIUzI1NiJ9.eyJyb2wiOiJBRE1JTklTVFJBRE9SIiwic3ViIjo...",
   "tipoToken": "Bearer",
-  "correo": "admin@territoriodeniños.com",
+  "correo": "admin@example.com",
   "rol": "ADMINISTRADOR"
 }
 ```
 
-### 2. Usar Token para Requests Protegidos
+### 2. Consumir Endpoints Protegidos
+Enviar el token en el header `Authorization: Bearer <TOKEN>`:
+
 ```bash
 curl -X GET http://localhost:8080/territorioninos/api/usuarios \
-  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiJ9..."
 ```
 
-## Estructura de Respuestas
+---
 
-### Usuario (UsuarioResponseDTO)
-```json
-{
-  "id": 1,
-  "nombre": "Juan Pérez",
-  "correo": "juan@example.com",
-  "estado": "ACTIVO",
-  "rol": "TAQUILLERO",
-  "fechaCreacion": "2024-06-30T10:15:30",
-  "fechaActualizacion": null
-}
-```
+## 🛡️ Matriz de Permisos por Rol
 
-### Error (ErrorResponse)
-```json
-{
-  "codigo": 400,
-  "mensaje": "Error de validación",
-  "detalle": "nombre: El nombre debe tener entre 3 y 100 caracteres",
-  "timestamp": "2024-06-30T10:15:30"
-}
-```
+| Endpoint | Método | Descripción | ADMINISTRADOR | TAQUILLERO | OPERARIO |
+|---|---|---|:---:|:---:|:---:|
+| `/api/auth/login` | `POST` | Autenticación y obtención de JWT | 🌐 Público | 🌐 Público | 🌐 Público |
+| `/api/usuarios` | `POST` | Registrar nuevo usuario | ✅ | ❌ | ❌ |
+| `/api/usuarios` | `GET` | Obtener todos los usuarios activos | ✅ | ✅ | ✅ |
+| `/api/usuarios/{id}` | `GET` | Obtener usuario por ID | ✅ | ✅ | ✅ |
+| `/api/usuarios/{id}` | `PUT` | Actualizar información de usuario | ✅ | ✅ | ❌ |
+| `/api/usuarios/{id}` | `DELETE` | Inactivar usuario (soft-delete) | ✅ | ❌ | ❌ |
 
-## Permisos por Rol
+---
 
-| Endpoint | Método | ADMINISTRADOR | TAQUILLERO | OPERARIO |
-|----------|--------|---------------|-----------|----------|
-| /api/usuarios | POST | ✅ | ❌ | ❌ |
-| /api/usuarios | GET | ✅ | ✅ | ✅ |
-| /api/usuarios/{id} | GET | ✅ | ✅ | ✅ |
-| /api/usuarios/{id} | PUT | ✅ | ✅ | ❌ |
-| /api/usuarios/{id} | DELETE | ✅ | ❌ | ❌ |
+## 🌿 Convención de Commits (Conventional Commits)
 
-## Buenas Prácticas Implementadas
-
-✅ **Separación de responsabilidades**: Cada capa tiene su responsabilidad clara  
-✅ **Bajo acoplamiento**: Interfaces y inyección de dependencias  
-✅ **DTOs**: Transferencia segura de datos sin exponer entidades  
-✅ **Validación**: Bean Validation + validación de negocio  
-✅ **Seguridad**: BCrypt, JWT, CORS, control de acceso  
-✅ **Documentación**: Swagger con descripciones detalladas  
-✅ **Manejo de errores**: GlobalExceptionHandler centralizado  
-✅ **Eliminación lógica**: Preservación de datos históricos  
-
-## Solución de Problemas
-
-### "FATAL: database 'territorioNinos' does not exist"
-```bash
-# Crear la BD manualmente
-psql -U postgres -c "CREATE DATABASE territorioNinos WITH ENCODING 'UTF8';"
-```
-
-### "FATAL: Ident authentication failed for user 'postgres'"
-- Asegúrate de que PostgreSQL está corriendo
-- Actualiza credenciales en `application.properties`
-- Verifica el archivo `pg_hba.conf` en la configuración de PostgreSQL
-
-### "Invalid JWT token"
-- Verificar que el token no ha expirado (24 horas)
-- Verificar que la clave JWT coincide
-
-## Próximos Pasos
-- Crear módulos adicionales según requerimientos
-- Implementar tests unitarios e integración
-- Configurar CI/CD
-- Documentar APIs adicionales
+El proyecto utiliza un historial de Git atómico y estructurado:
+- `chore(setup):` Inicialización del proyecto y configuración Maven.
+- `feat(config):` Modificaciones de configuración y properties.
+- `feat(domain):` Entidades JPA y enums con auditoría.
+- `feat(dto):` Data Transfer Objects con Lombok y validaciones.
+- `feat(repository):` Repositorios Spring Data JPA.
+- `feat(security):` Componentes de seguridad Spring Security y JWT.
+- `feat(service):` Lógica de negocio.
+- `feat(controller):` Endpoints REST y respuestas.
+- `docs:` Actualizaciones de documentación.
 
 ---
 
 **Versión**: 1.0.0  
-**Última actualización**: 30 de junio de 2024
+**Última actualización**: Julio 2026
